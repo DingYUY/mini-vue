@@ -31,4 +31,31 @@ describe('effect', () => {
     expect(foo).toBe(12)
     expect(r).toBe('foo')
   })
+
+  it('scheduler', () => {
+    /** 
+     * 1. 通过 effect 的第二个参数，在 options 中设置一个函数 scheduler
+     * 1. effect第一次执行的时候执行fn，scheduler不会执行
+     * 2. 当 响应式对象 update set 的时候， 不会执行fn, 执行scheduler
+     * 3. 执行 runner 的时候，会再执行fn
+    */
+    let dummy: any
+    let run: any
+    const scheduler = jest.fn(() => {
+      run = runner;
+    });
+    const obj = reactive({ foo: 1 })
+    const runner = effect(() => {
+      dummy = obj.foo
+    }, { scheduler })
+    expect(scheduler).not.toHaveBeenCalled()
+    expect(dummy).toBe(1)
+
+    obj.foo++
+    expect(scheduler).toHaveBeenCalledTimes(1)
+    expect(dummy).toBe(1)
+
+    run()
+    expect(dummy).toBe(2)
+  })
 })
