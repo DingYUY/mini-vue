@@ -1,5 +1,7 @@
 import { extend } from "../shared"
 
+let activeEffect: any;
+let shouldTrack: boolean
 class ReactiveEffect {
   private _fn: any
   public scheduler?: Function | undefined
@@ -13,15 +15,25 @@ class ReactiveEffect {
   }
 
   run() {
+    if (!this.active) {
+      return this._fn()
+    }
+
+    shouldTrack = true
     activeEffect = this
-    return this._fn()
+    const result = this._fn()
+    shouldTrack = false
+
+    return result
   }
   stop() {
-    if (!this.active) return
-    if (this.onStop) {
-      this.onStop()
+    if (this.active) {
+      cleanupEffect(this)
+      if (this.onStop) {
+        this.onStop()
+      }
+      this.active = false
     }
-    cleanupEffect(this)
   }
 }
 
@@ -29,11 +41,14 @@ function cleanupEffect(effect: any) {
   effect.deps.forEach((dep: any) => {
     dep.delete(effect);
   });
+  effect.deps.length = 0;
 }
 
 let targetMaps = new Map()
 export function track(target: any, key: any) { 
   // target -> key -> dep
+  if (!isTracking()) return
+
   let deptMaps = targetMaps.get(target)
   if (!deptMaps) {
     deptMaps = new Map()
@@ -46,11 +61,15 @@ export function track(target: any, key: any) {
     deptMaps.set(key, dep)
   }
 
+  if (dep.has(activeEffect)) return
+
   dep.add(activeEffect)
 
-  if (!activeEffect) return
-
   activeEffect.deps.push(dep)
+}
+
+function isTracking() {
+  return shouldTrack && activeEffect !== undefined
 }
 
 export function trigger(target: any, key: any) {
@@ -66,7 +85,6 @@ export function trigger(target: any, key: any) {
   }
 }
 
-let activeEffect: any
 export function effect(fn, options: any = {}) {
 
   const _effect = new ReactiveEffect(fn)

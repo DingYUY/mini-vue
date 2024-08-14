@@ -70,6 +70,8 @@ describe('effect', () => {
     obj.prop = 2
     expect(dummy).toBe(2)
     stop(runner)
+    // obj.prop = 3 // only set
+    obj.prop++ // get + set
     expect(dummy).toBe(2)
 
     runner()
