@@ -1,4 +1,4 @@
-import { isReadonly, shallowReadonly } from "../reactive";
+import { isReadonly, shallowReadonly, isProxy } from "../reactive";
 
 
 describe('shallowReadonly', () => {
@@ -12,6 +12,8 @@ describe('shallowReadonly', () => {
     const observed = shallowReadonly(original)
     expect(isReadonly(observed)).toBe(true)
     expect(isReadonly(observed.prop)).toBe(false)
+
+    expect(isProxy(observed)).toBe(true)
   })
 
   it("should call console.warn when set", () => {

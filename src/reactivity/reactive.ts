@@ -21,12 +21,16 @@ export function shallowReadonly(raw) {
   return createReactiveObject(raw, shallowReadonlyHandlers)
 }
 
-export function isReactive(raw) {
-  return !!raw[ReactiveFlags.IS_REACTIVE];
+export function isReactive(value) {
+  return !!value[ReactiveFlags.IS_REACTIVE];
 }
 
-export function isReadonly(raw) {
-  return !!raw[ReactiveFlags.IS_READONLY];
+export function isReadonly(value) {
+  return !!value[ReactiveFlags.IS_READONLY];
+}
+
+export function isProxy(value) {
+  return isReactive(value) || isReadonly(value);
 }
 
 function createReactiveObject(raw, baseHandlers) { 
