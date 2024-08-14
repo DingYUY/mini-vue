@@ -1,4 +1,4 @@
-import { isObject } from "../shared";
+import { extend, isObject } from "../shared";
 import { track, trigger } from "./effect";
 import { reactive, ReactiveFlags, readonly } from "./reactive";
 
@@ -6,16 +6,21 @@ const get = createGetter();
 const set = createSetter();
 const readonlyGet = createGetter(true)
 const readonlySet = createReadonlySetter()
+const shallowReadonlyGet = createGetter(true, true)
 
-function createGetter(isReadonly = false) {
-  return function get(target, key) {
+function createGetter(isReadonly = false, isShallowReadonly = false) {
+  return function get(raw, key) {
     if (key === ReactiveFlags.IS_REACTIVE) { 
       return !isReadonly
     } else if (key === ReactiveFlags.IS_READONLY) {
       return isReadonly 
     }
 
-    const res = Reflect.get(target, key);
+    const res = Reflect.get(raw, key);
+
+    if (isShallowReadonly) {
+      return res
+    }
 
     if (isObject(res)) {
       return isReadonly ? readonly(res) : reactive(res)
@@ -23,25 +28,25 @@ function createGetter(isReadonly = false) {
 
     if (!isReadonly) {
       // 收集依赖
-      track(target, key);
+      track(raw, key);
     }
     return res;
   };
 }
 
 function createSetter() {
-  return function set(target, key, value) {
-    const res = Reflect.set(target, key, value);
+  return function set(raw, key, value) {
+    const res = Reflect.set(raw, key, value);
 
     // 触发依赖
-    trigger(target, key);
+    trigger(raw, key);
     return res;
   };
 }
 
 function createReadonlySetter() {
-  return function set(target, key, value) {
-    console.warn(`属性 ${key} 是只读属性`, target)
+  return function set(raw, key, value) {
+    console.warn(`属性 ${key} 是只读属性`, raw)
     return true;
   };
 }
@@ -55,3 +60,7 @@ export const readonlyHandlers = {
   get: readonlyGet,
   set: readonlySet,
 };
+
+export const shallowReadonlyHandlers = extend({}, readonlyHandlers, {
+  get: shallowReadonlyGet,
+});

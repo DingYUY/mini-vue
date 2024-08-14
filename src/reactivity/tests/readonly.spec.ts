@@ -12,7 +12,7 @@ describe('readonly', () => {
     expect(isReadonly(observed.arr)).toBe(true);
   })
 
-  it('warn when call set', () => {
+  it('should call console.warn when set', () => {
     console.warn = jest.fn()
 
     const user = readonly({ foo: 1 })
