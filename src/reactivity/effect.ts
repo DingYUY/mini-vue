@@ -45,15 +45,15 @@ function cleanupEffect(effect: any) {
   effect.deps.length = 0;
 }
 
-let rawMaps = new Map()
-export function track(raw: any, key: any) { 
-  // raw -> key -> dep
+let targetMaps = new Map()
+export function track(target: any, key: any) { 
+  // target -> key -> dep
   if (!isTracking()) return
 
-  let deptMaps = rawMaps.get(raw)
+  let deptMaps = targetMaps.get(target)
   if (!deptMaps) {
     deptMaps = new Map()
-    rawMaps.set(raw, deptMaps)
+    targetMaps.set(target, deptMaps)
   }
 
   let dep = deptMaps.get(key)
@@ -77,8 +77,8 @@ export function isTracking() {
   return shouldTrack && activeEffect !== undefined
 }
 
-export function trigger(raw: any, key: any) {
-  const depMaps = rawMaps.get(raw)
+export function trigger(target: any, key: any) {
+  const depMaps = targetMaps.get(target)
   const dep = depMaps.get(key)
 
   triggerEffects(dep)
