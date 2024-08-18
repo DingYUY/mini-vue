@@ -2,7 +2,8 @@ import { extend } from "../shared"
 
 let activeEffect: any;
 let shouldTrack: boolean
-class ReactiveEffect {
+
+export class ReactiveEffect {
   private _fn: any
   public scheduler?: Function | undefined
   deps = []
