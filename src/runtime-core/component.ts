@@ -3,7 +3,6 @@ export function createComponentInstance(vnode) {
     vnode,
     type: vnode.type,
   }
-
   return component
 }
 
