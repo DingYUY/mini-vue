@@ -5,10 +5,7 @@ export function render(vnode: any, container: any) {
 }
 
 function patch(vnode: any, container: any) {
-  // TODO 判断 vnode 的类型 component or element
-
-  console.log("vnode", vnode);
-
+  //  判断 vnode 的类型 component or element
   if (typeof vnode.type === "string") {
     // 处理元素节点
     precessElement(vnode, container);
@@ -23,7 +20,7 @@ function precessElement(vnode: any, container: any) {
 }
 
 function mountElement(vnode: any, container: any) {
-  const el = document.createElement(vnode.type)
+  const el = (vnode.el = document.createElement(vnode.type));
 
   const { props, children } = vnode;
 
@@ -46,21 +43,25 @@ function mountChildren(vnode: any, container: any) {
   })
 }
 
-function processComponent(vnode: any, container: any) {
-  mountComponent(vnode, container);
+function processComponent(initialVNode: any, container: any) {
+  mountComponent(initialVNode, container);
 }
 
-function mountComponent(vnode: any, container: any) {
-  const instance = createComponentInstance(vnode);
+function mountComponent(initialVNode: any, container: any) {
+  const instance = createComponentInstance(initialVNode);
 
   setupComponent(instance, container);
 
-  setupRenderEffect(instance, container);
+  setupRenderEffect(instance, initialVNode, container);
 }
 
-function setupRenderEffect(instance: any, container: any) {
-  const subTree = instance.render();
+function setupRenderEffect(instance: any, initialVNode: any, container: any) {
+  const { proxy } = instance
+  const subTree = instance.render.call(proxy);
 
   patch(subTree, container);
+
+  // element -> mount
+  initialVNode.el = subTree.el;
 }
 
