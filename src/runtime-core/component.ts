@@ -1,4 +1,6 @@
+import { shallowReadonly } from "../reactivity/reactive";
 import { PublicInstanceProxyHandler } from "./componentPublicInstance";
+import { initProps } from "./initProps";
 
 export function createComponentInstance(vnode) { 
   const component = {
@@ -9,7 +11,7 @@ export function createComponentInstance(vnode) {
 }
 
 export function setupComponent(instance, container) { 
-  // TODO initProps
+  initProps(instance, instance.vnode.props)
   // TODO initSlots
 
   setupStatefulComponent(instance)
@@ -24,7 +26,7 @@ function setupStatefulComponent(instance: any) {
   const { setup } = Component
 
   if (setup) {
-    const setupResult = setup()
+    const setupResult = setup(shallowReadonly(instance.props));
 
     handleSetupResult(instance, setupResult)
   }
@@ -38,7 +40,7 @@ function handleSetupResult(instance: any, setupResult: any) {
 
   // object
   if (typeof instance === 'object') {
-    instance.setupState = setupResult
+    instance.setupState = setupResult || {}
   }
 
   // 一定要保证组件的render是有值的

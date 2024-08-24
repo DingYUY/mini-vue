@@ -30,7 +30,17 @@ function mountElement(vnode: any, container: any) {
   const { props, children, shapeFlag } = vnode;
 
   for (const key in props) {
-    el.setAttribute(key, props[key]);
+    const val = props[key]
+
+    // 例如 onClick ... 事件处理
+    const isOn = (key) => /^on[A-Z]/.test(key)
+    if (isOn(key)) {
+      const event = key.slice(2).toLocaleLowerCase()
+      el.addEventListener(event, val)
+    } else {
+      el.setAttribute(key, val)
+    }
+
   }
 
   if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
