@@ -2,7 +2,8 @@ import { hasOwn } from "../shared";
 
 // 可自由扩展 $data ...
 const publicPropertiesMap = {
-  $el: (instance) => instance.vnode.el 
+  $el: (instance) => instance.vnode.el,
+  $slots: (instance) => instance.slots
 }
 
 export const PublicInstanceProxyHandler = {
