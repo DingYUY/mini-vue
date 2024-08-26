@@ -8,16 +8,17 @@ export function createComponentInstance(vnode) {
   const component = {
     vnode,
     type: vnode.type,
-    emit: {},
+    setupState: {},
+    emit: () => {},
     slots: {}
   }
 
-  component.emit = emit.bind(null, component)
+  component.emit = emit.bind(null, component) as any
 
   return component
 }
 
-export function setupComponent(instance, container) { 
+export function setupComponent(instance) { 
   initProps(instance, instance.vnode.props)
   initSlots(instance, instance.vnode.children)
 
@@ -48,8 +49,8 @@ function handleSetupResult(instance: any, setupResult: any) {
   // TODO function
 
   // object
-  if (typeof instance === 'object') {
-    instance.setupState = setupResult || {}
+  if (typeof setupResult === "object") {
+    instance.setupState = setupResult
   }
 
   // 一定要保证组件的render是有值的
@@ -58,9 +59,6 @@ function handleSetupResult(instance: any, setupResult: any) {
 
 function finishComponentSetup(instance: any) {
   const Component = instance.type
-
-  if (Component.render) {
-    instance.render = Component.render
-  }
+  instance.render = Component.render
 }
 
