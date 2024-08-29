@@ -1,3 +1,4 @@
+import { proxyRefs } from "../reactivity";
 import { shallowReadonly } from "../reactivity/reactive";
 import { emit } from "./componentEmit";
 import { PublicInstanceProxyHandler } from "./componentPublicInstance";
@@ -12,7 +13,9 @@ export function createComponentInstance(vnode, parent) {
     emit: () => {},
     slots: {},
     provides: parent ? parent.provides : {},
-    parent
+    parent,
+    isMounted: false,
+    subTree: {}
   }
 
   component.emit = emit.bind(null, component) as any
@@ -56,7 +59,7 @@ function handleSetupResult(instance: any, setupResult: any) {
 
   // object
   if (typeof setupResult === "object") {
-    instance.setupState = setupResult
+    instance.setupState = proxyRefs(setupResult);
   }
 
   // 一定要保证组件的render是有值的
