@@ -5,14 +5,18 @@ export function createElement(type) {
   return document.createElement(type);
 }
 
-export function patchProp(el, key, val) {
+export function patchProp(el, key, prevProp, nextProp) {
   // 例如 onClick ... 事件处理
   const isOn = (key) => /^on[A-Z]/.test(key);
   if (isOn(key)) {
     const event = key.slice(2).toLocaleLowerCase();
-    el.addEventListener(event, val);
+    el.addEventListener(event, nextProp);
   } else {
-    el.setAttribute(key, val);
+    if (nextProp === undefined || nextProp === null) {
+      el.removeAttribute(key, nextProp);
+    } else {
+      el.setAttribute(key, nextProp);
+    }
   }
 }
 
