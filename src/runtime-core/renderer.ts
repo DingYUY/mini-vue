@@ -1,5 +1,6 @@
 import { effect } from "../reactivity";
 import { EMPTY_OBJ } from "../shared";
+import { getSequence } from "../shared/getSequence";
 import { ShapeFlags } from "../shared/shapeFlags";
 import { createComponentInstance, setupComponent } from "./component";
 import { createAppApi } from "./createApp";
@@ -116,8 +117,6 @@ export function createRenderer(options) {
       return n1.type === n2.type && n1.key === n2.key;
     }
 
-    debugger
-
     // 左侧
     while (i <= e1 && i <= e2) {
       const n1 = c1[i]
@@ -147,8 +146,8 @@ export function createRenderer(options) {
       e2--
     }
 
-    // 新的比老的多 创建
     if (i > e1) {
+      // 新的比老的多 创建
       while (i <= e2) {
         const nextPos = e2 + 1;
         const anchor = nextPos < c2.length ? c2[nextPos].el : null;
@@ -158,9 +157,92 @@ export function createRenderer(options) {
         }
       }
     } else if (i > e2) {
+      // 老的比新的多 删除
       while (i <= e1) {
         hostRemove(c1[i].el)
         i++
+      }
+    } else {
+      // 中间对
+      let s1 = i
+      let s2 = i
+
+      // 优化
+      const toBePatched = e2 - s2 + 1
+      let patched = 0
+      const keyToNewIndexMap = new Map()
+      // 定长数组性能最好
+      const newIndexToOldIndexMap = new Array()
+
+      // 优化点，判断需不需要移动
+      let moved = false
+      let maxNewIndexSoFar = 0
+
+      // 0 代表新的没有，需要移动或者新增
+      for (let i = 0; i <= e2 - s2; i++) newIndexToOldIndexMap[i] = 0
+      
+      for (let i = s2; i <= e2; i++) {
+        const nextChild = c2[i]
+        keyToNewIndexMap.set(nextChild.key, i);
+      }
+
+      for (let i = s1; i <= e1; i++) {
+        const prevChild = c1[i]
+
+        // 老比新多超出全部删除，无需再次遍历
+        if (patched >= toBePatched) {
+          hostRemove(prevChild.el);
+          continue;
+        }
+
+        let nextIndex
+        // undefined || null
+        if (prevChild.key != null) {
+          nextIndex = keyToNewIndexMap.get(prevChild.key)
+        } else {
+          for (let j = s2; j <= e2; j++) {
+            if (isSameVNodeType(prevChild, c2[j])) {
+              nextIndex = j
+              break
+            }
+          }
+        }
+
+        if (nextIndex === undefined) {
+          hostRemove(prevChild.el)
+        } else {
+          if (nextIndex >= maxNewIndexSoFar) {
+            maxNewIndexSoFar = nextIndex
+          } else {
+            moved = true
+          }
+
+          newIndexToOldIndexMap[nextIndex - s2] = i + 1;
+
+          patch(prevChild, c2[nextIndex], container, parentComponent, null)
+          patched++
+        }
+      }
+
+      // 
+      const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : []
+      let j = increasingNewIndexSequence.length - 1
+
+      for (let i = toBePatched - 1; i >= 0; i--) {
+        const nextIndex = i + s2
+        const nextChild = c2[nextIndex]
+        const anchor = nextIndex + 1 < c2.length ? c2[nextIndex + 1].el : null
+
+        if (newIndexToOldIndexMap[i] === 0) {
+          patch(null, nextChild, container, parentComponent, anchor)
+        } else if (moved) {
+          if (i !== increasingNewIndexSequence[j]) {
+            hostInsert(nextChild.el, container, anchor)
+          } else {
+            j--
+          }
+        }
+
       }
     }
   }
