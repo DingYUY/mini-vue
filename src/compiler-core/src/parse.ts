@@ -1,4 +1,4 @@
-import { NodeTypes } from "./ast";
+import { NodeTypes, TagTypes } from "./ast";
 
 export function baseParse(content) {
   const context = createParserContext(content);
@@ -9,10 +9,12 @@ export function baseParse(content) {
 function parseChildren(context) {
   let nodes: any = [];
 
-  let node: any
+  let node: any;
 
   if (context.source.startsWith("{{")) {
     node = parseInterpolation(context);
+  } else if (context.source.startsWith("<")) {
+    node = parseElement(context);
   }
 
   nodes.push(node);
@@ -20,20 +22,45 @@ function parseChildren(context) {
   return nodes;
 }
 
+function parseElement(context) {
+  const element = parseTag(context, TagTypes.START);
+  
+  parseTag(context, TagTypes.END);
+  
+  return element
+}
+
+function parseTag(context: any, type: TagTypes) {
+  const match: any = /^<\/?([a-z]*)/i.exec(context.source);
+  const tag = match[1];
+  advanceBy(context, match[0].length);
+  advanceBy(context, 1);
+
+  if (type === TagTypes.END) return;
+
+  return {
+    type: NodeTypes.ELEMENT,
+    tag,
+  };
+}
+
 function parseInterpolation(context) {
   const openDelimiter = "{{";
   const closeDelimiter = "}}";
 
-  const closeIndex = context.source.indexOf(closeDelimiter, openDelimiter.length)
-  
-  advanceBy(context, openDelimiter.length)
-  context.source.trim()
+  const closeIndex = context.source.indexOf(
+    closeDelimiter,
+    openDelimiter.length
+  );
 
-  const rawLength = closeIndex - openDelimiter.length
+  advanceBy(context, openDelimiter.length);
+  context.source.trim();
+
+  const rawLength = closeIndex - openDelimiter.length;
 
   const content = context.source.slice(0, rawLength);
 
-  advanceBy(context, rawLength + closeDelimiter.length)
+  advanceBy(context, rawLength + closeDelimiter.length);
 
   return {
     type: NodeTypes.INTERPOLATION,
