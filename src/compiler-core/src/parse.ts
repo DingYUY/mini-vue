@@ -3,51 +3,80 @@ import { NodeTypes, TagTypes } from "./ast";
 export function baseParse(content) {
   const context = createParserContext(content);
 
-  return createRoot(parseChildren(context));
+  return createRoot(parseChildren(context, ''));
 }
 
-function parseChildren(context) {
+function parseChildren(context, parentTag) {
   let nodes: any = [];
 
-  let node: any;
+  while (!isEnd(context, parentTag)) {
+    let node: any;
+    const s = context.source;
+    if (s.startsWith("{{")) {
+      node = parseInterpolation(context);
+    } else if (s[0] === "<") {
+      if (/[a-z]/i.test(s[1])) {
+        node = parseElement(context);
+      }
+    }
 
-  if (context.source.startsWith("{{")) {
-    node = parseInterpolation(context);
-  } else if (context.source.startsWith("<")) {
-    node = parseElement(context);
-  }
+    if (!node) {
+      node = parseText(context);
+    }
 
-  if (!node) {
-    node = parseText(context)
+    nodes.push(node);
   }
- 
-  nodes.push(node);
 
   return nodes;
 }
 
+function isEnd(context, parentTag) {
+  const s = context.source;
+
+  // 遇到结束标签时
+  if (parentTag && s.startsWith(`</${parentTag}>`)) {
+    return true;
+  }
+
+  // 1.source有值时
+  return !s
+}
+
 function parseText(context) {
- 
-  const content = parseTextData(context, context.source.length)
+  let endIndex = context.source.length;
+  const endTokens = ["<", "{{"];
+
+  console.log('source', context.source)
+  
+  for (let i = 0; i < endTokens.length; i++) {
+    const index = context.source.indexOf(endTokens[i]);
+    if (index !== -1 && endIndex > index) {
+      endIndex = index;
+    }
+  }
+
+  const content = parseTextData(context, endIndex);
 
   return {
     type: NodeTypes.TEXT,
-    content
-  }
+    content,
+  };
 }
 
 function parseTextData(context, length) {
-  const content = context.source.slice(0, length)
-  advanceBy(context, length)
-  return content
+  const content = context.source.slice(0, length);
+  advanceBy(context, length);
+  return content;
 }
 
 function parseElement(context) {
-  const element = parseTag(context, TagTypes.START);
-  
+  const element: any = parseTag(context, TagTypes.START);
+
+  element.children = parseChildren(context, element.tag);
+
   parseTag(context, TagTypes.END);
-  
-  return element
+
+  return element;
 }
 
 function parseTag(context: any, type: TagTypes) {
@@ -60,7 +89,7 @@ function parseTag(context: any, type: TagTypes) {
 
   return {
     type: NodeTypes.ELEMENT,
-    tag,
+    tag
   };
 }
 
