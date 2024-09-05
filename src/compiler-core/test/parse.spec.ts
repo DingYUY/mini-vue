@@ -16,13 +16,25 @@ describe('parse', () => {
         }
       })
     })
+  })
 
-    it('element', () => {
+  describe('element', () => {
+    it('simple element div', () => {
       const ast = baseParse("<div></div>");
       expect(ast.children[0]).toStrictEqual({
         type: NodeTypes.ELEMENT,
-        tag: 'div'
+        tag: "div",
       });
     })
+  })
+
+  describe('text', () => { 
+    it("simple text", () => {
+      const ast = baseParse("hello world");
+      expect(ast.children[0]).toStrictEqual({
+        type: NodeTypes.TEXT,
+        content: "hello world",
+      });
+    });
   })
 })
