@@ -3,20 +3,20 @@ import { NodeTypes, TagTypes } from "./ast";
 export function baseParse(content) {
   const context = createParserContext(content);
 
-  return createRoot(parseChildren(context, ''));
+  return createRoot(parseChildren(context, []));
 }
 
-function parseChildren(context, parentTag) {
+function parseChildren(context, ancestors) {
   let nodes: any = [];
 
-  while (!isEnd(context, parentTag)) {
+  while (!isEnd(context, ancestors)) {
     let node: any;
     const s = context.source;
     if (s.startsWith("{{")) {
       node = parseInterpolation(context);
     } else if (s[0] === "<") {
       if (/[a-z]/i.test(s[1])) {
-        node = parseElement(context);
+        node = parseElement(context, ancestors);
       }
     }
 
@@ -30,16 +30,23 @@ function parseChildren(context, parentTag) {
   return nodes;
 }
 
-function isEnd(context, parentTag) {
+function isEnd(context, ancestors) {
   const s = context.source;
 
   // 遇到结束标签时
-  if (parentTag && s.startsWith(`</${parentTag}>`)) {
-    return true;
+  for (let i = ancestors.length - 1; i >= 0; i--) {
+    const tag = ancestors[i];
+    if (startsWithEndTagOpen(s, tag)) {
+      return true;
+    }
   }
 
   // 1.source有值时
-  return !s
+  return !s;
+}
+
+function startsWithEndTagOpen(source, tag) {
+  return source.startsWith("</") && source.slice(2, 2 + tag.length).toLowerCase() === tag.toLowerCase();
 }
 
 function parseText(context) {
@@ -69,12 +76,19 @@ function parseTextData(context, length) {
   return content;
 }
 
-function parseElement(context) {
+function parseElement(context, ancestors) {
   const element: any = parseTag(context, TagTypes.START);
 
-  element.children = parseChildren(context, element.tag);
+  ancestors.push(element.tag)
+  element.children = parseChildren(context, ancestors);
+  ancestors.pop()
 
-  parseTag(context, TagTypes.END);
+  if (startsWithEndTagOpen(context.source, element.tag)) { 
+    parseTag(context, TagTypes.END);
+  } else {
+    throw new Error(`缺少结束标签: ${element.tag}`);
+  }
+
 
   return element;
 }
