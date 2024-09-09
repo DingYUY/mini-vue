@@ -34,10 +34,12 @@ function isEnd(context, ancestors) {
   const s = context.source;
 
   // 遇到结束标签时
-  for (let i = ancestors.length - 1; i >= 0; i--) {
-    const tag = ancestors[i];
-    if (startsWithEndTagOpen(s, tag)) {
-      return true;
+  if (s.startsWith("</")) {
+    for (let i = ancestors.length - 1; i >= 0; i--) {
+      const tag = ancestors[i].tag;
+      if (startsWithEndTagOpen(s, tag)) {
+        return true;
+      }
     }
   }
 
@@ -52,8 +54,6 @@ function startsWithEndTagOpen(source, tag) {
 function parseText(context) {
   let endIndex = context.source.length;
   const endTokens = ["<", "{{"];
-
-  console.log('source', context.source)
   
   for (let i = 0; i < endTokens.length; i++) {
     const index = context.source.indexOf(endTokens[i]);
@@ -78,11 +78,9 @@ function parseTextData(context, length) {
 
 function parseElement(context, ancestors) {
   const element: any = parseTag(context, TagTypes.START);
-
-  ancestors.push(element.tag)
+  ancestors.push(element)
   element.children = parseChildren(context, ancestors);
   ancestors.pop()
-
   if (startsWithEndTagOpen(context.source, element.tag)) { 
     parseTag(context, TagTypes.END);
   } else {
@@ -117,11 +115,12 @@ function parseInterpolation(context) {
   );
 
   advanceBy(context, openDelimiter.length);
-  context.source.trim();
 
   const rawLength = closeIndex - openDelimiter.length;
 
-  const content = parseTextData(context, rawLength);
+  const rawContent = parseTextData(context, rawLength);
+
+  const content = rawContent.trim()
 
   advanceBy(context, closeDelimiter.length);
 
