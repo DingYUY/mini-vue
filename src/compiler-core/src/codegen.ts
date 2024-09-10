@@ -15,6 +15,7 @@ export function generate(ast) {
   const signature = args.join(", ")
 
   push(`function ${functionName}(${signature}) {`)
+  push('return ')
   genNode(ast.codegenNode, context)
   push("}")
   return {
@@ -47,13 +48,6 @@ function createCodegenContext() {
 }
 
 function genNode(node, context) {
-  console.log(
-    "node=============",
-    node,
-    node.type === NodeTypes.INTERPOLATION,
-    node.type === NodeTypes.TEXT,
-    node.type === NodeTypes.SIMPLE_EXPRESSION
-  );
   switch (node.type) {
     case NodeTypes.TEXT:
       genText(node, context)

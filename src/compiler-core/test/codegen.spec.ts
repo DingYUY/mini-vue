@@ -3,7 +3,7 @@ import { baseParse } from "../src/parse"
 import { transform } from "../src/transform"
 import { transformExpression } from "../src/transforms/transformExpression"
 import { transformText } from "../src/transforms/transformText"
-import { transformElement } from "../src/transforms/trensformElement"
+import { transformElement } from "../src/transforms/transformElement"
 
 
 describe('codegen', () => {
@@ -25,7 +25,7 @@ describe('codegen', () => {
     expect(code).toMatchSnapshot()
   })
 
-  it.only('element', () => {
+  it('element', () => {
     const ast = baseParse("<div>hi,{{message}}</div>");
     transform(ast, {
       nodeTransforms: [transformExpression, transformElement, transformText],

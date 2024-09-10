@@ -48,4 +48,4 @@ export function createApp(...args) {
   return renderer.createApp(...args)
 }
 
-export * from "../runtime-core/index";
+export * from "../runtime-core";
