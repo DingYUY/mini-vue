@@ -4,7 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "test": "jest",
+    "test": "vitest",
     "build": "rollup -c rollup.config.js"
   },
   "keywords": [],
@@ -15,11 +15,9 @@
     "@babel/preset-env": "^7.25.3",
     "@babel/preset-typescript": "^7.24.7",
     "@rollup/plugin-typescript": "^11.1.6",
-    "@types/jest": "^29.5.12",
-    "babel-jest": "^29.7.0",
-    "jest": "^29.7.0",
     "rollup": "^4.21.0",
     "tslib": "^2.6.3",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
   }
 }
